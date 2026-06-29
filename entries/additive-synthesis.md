@@ -1,0 +1,6 @@
+---
+title: Additive Synthesis
+subtitle: A method of sound synthesis that constructs complex timbres by summing individual sinusoidal components, each with independent control over frequency, amplitude, and phase.
+author: Marcin Pietruszewski
+permalink: /handbook/additive-synthesis/
+---
