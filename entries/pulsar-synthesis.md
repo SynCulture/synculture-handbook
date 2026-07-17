@@ -19,21 +19,31 @@ toc:
     text: Code examples
   - id: instrumental-implementations
     text: Instrumental implementations
-  - id: aesthetics
+  - id: aesthetics-and-cultural-context
     text: Aesthetics and cultural context
   - id: references
     text: References
 references:
   - "Roads, C. (2001). <em>Microsound</em>. Cambridge, MA: MIT Press."
-  - "Roads, C. (2004). Point, line, cloud: the legacy of Iannis Xenakis. In <em>Presences of Iannis Xenakis</em>, ed. M. Solomos. Paris: CDMC."
   - "Roads, C. (2001). Sound composition with pulsars. <em>Journal of the Audio Engineering Society</em>, 49(3), 134-147."
+  - "Roads, C. (2004). Point, line, cloud: the legacy of Iannis Xenakis. In <em>Presences of Iannis Xenakis</em>, ed. M. Solomos. Paris: CDMC."
+  - "Roads, C. (2001). <em>PulsarGenerator Manual of Operation</em>. Document version 1, 24 March 2001. Santa Barbara: CREATE."
+  - "Roads, C. (2020). <em>Composing Electronic Music: A New Aesthetic</em>. Rev. ed. New York: Oxford University Press."
   - "Gabor, D. (1946). Theory of communication. Part 1: The analysis of information. <em>Journal of the Institution of Electrical Engineers</em>, 93(26), 429-441."
   - "Gabor, D. (1947). Acoustical quanta and the theory of hearing. <em>Nature</em>, 159(4044), 591-594."
+  - "Jenny, G. (1958). L'Ondioline: conception et réalisation. <em>Toute la radio</em>."
+  - "Stockhausen, K. (1957). . . . wie die Zeit vergeht . . . <em>die Reihe</em>, 3, 10-43. English ed. (1959): . . . How Time Passes . . . Bryn Mawr: Theodore Presser."
+  - "Koenig, G. M. (1959). Studium im Studio. <em>die Reihe</em>, 5. English ed. (1961). Bryn Mawr: Theodore Presser."
+  - "Kaegi, W., and Tempelaars, S. (1978). VOSIM -- a new sound synthesis system. <em>Journal of the Audio Engineering Society</em>, 26(6), 418-425."
+  - "Rodet, X. (1984). Time-domain formant-wave-function synthesis. <em>Computer Music Journal</em>, 8(3), 9-14."
   - "Xenakis, I. (1971). <em>Formalized Music: Thought and Mathematics in Composition</em>. Bloomington: Indiana University Press."
   - "Xenakis, I. (1992). <em>Formalized Music</em>. Rev. ed. Stuyvesant, NY: Pendragon Press."
-  - "Roads, C. (2020). <em>Composing Electronic Music: A New Aesthetic</em>. Rev. ed. New York: Oxford University Press."
   - "De Campo, A. (2004). Microsound. In N. Collins and J. d'Escrivan (eds.), <em>The Cambridge Companion to Electronic Music</em>. Cambridge University Press."
+  - "Haworth, C. (2015). Sound synthesis procedures as texts: an ontological politics in electroacoustic and computer music. <em>Computer Music Journal</em>, 39(1), 41-58."
   - "Pietruszewski, M. (2021). New Pulsar Generator (nuPG). Software."
+  - "Pietruszewski, M. (2024). <em>The New Pulsar Generator (nuPG): Compositional Practice, Digital Sound Synthesis Model and Their Temporalities</em>. PhD thesis, University of Edinburgh."
+  - "Pietruszewski, M. (2020). The digital instrument as an artifact. In P. Weibel, L. Brümmer, and S. Kanach (eds.), <em>From Xenakis's UPIC to Graphic Notation Today</em>, 613-627. Berlin: Hatje Cantz / Karlsruhe: ZKM."
+  - "Pietruszewski, M. (2026). Media-archaeological synthesis. Manuscript in review."
 related:
   - slug: granular-synthesis
     title: Granular Synthesis
@@ -53,15 +63,17 @@ Pulsar synthesis differs from granular synthesis in several respects. Where gran
 
 ## Genealogy
 
-The intellectual lineage of pulsar synthesis passes through several key moments in the history of sound synthesis and acoustics:
+Roads describes pulsar synthesis as a method that "melds established principles within a new paradigm" (Roads 2001). Its lineage runs along three distinct threads: the filtered pulse trains of analog electronic music, the particle-based formant synthesis techniques of the 1970s and 1980s, and the microsound paradigm descending from Gabor.
 
-**Dennis Gabor (1946-1947)** proposed that any sound can be decomposed into elementary acoustical quanta -- short time-frequency atoms. This insight, developed alongside his work on communication theory, challenged the prevailing Fourier-analytic view of sound as a sum of infinite sinusoidal components. Gabor's quanta are finite in both time and frequency, occupying a cell in the joint time-frequency plane whose minimum area is bounded by the uncertainty principle.
+**Filtered pulse trains (1950s-1960s).** In its basic form, pulsar synthesis "generates electronic pulses and pitched tones similar to those produced by analog instruments such as the Ondioline (Jenny 1958) and the Hohner Elektronium (introduced in 1950), which were designed around the principle of filtered pulse trains" (Roads 2001). The same principle was central to studio practice in the {% xref "elektronische-musik", "elektronische Musik" %} of the Cologne studio: Karlheinz Stockhausen and Gottfried Michael Koenig used filtered impulse generation as a staple of their craft. Stockhausen's theoretical essay *. . . wie die Zeit vergeht . . .* (1957) articulated the continuity between rhythm and pitch as a single temporal continuum traversed by acceleration -- the perceptual territory that pulsar synthesis makes directly playable through its fundamental frequency parameter.
 
-**Iannis Xenakis (1960s-1970s)** developed the first practical methods for composing with sonic particles. His concept of *sound clouds* -- statistical distributions of grains across time, frequency, amplitude, and duration -- provided a compositional framework for microsound. Xenakis implemented granular textures in works such as *Analogique A-B* (1959) and later in software including {% xref "gendyn", "GENDYN" %} (1991), which generated sound at the sample level through stochastic procedures.
+**Particle-based formant synthesis (1970s-1980s).** A pulsaret with a sharp attack and exponential decay reproduces "a well-known configuration for formant synthesis, as seen in techniques such as window function synthesis, VOSIM (Kaegi and Tempelaars 1978), and FOF (Rodet 1984)" (Roads 2001). Roads positions these {% xref "formant-synthesis", "formant synthesis" %} techniques as special cases of pulsar synthesis: where FOF fixes the waveform (a sine) and constrains the envelope, pulsar synthesis leaves both freely variable.
 
-**Curtis Roads (1978-2001)** extended both Gabor and Xenakis through sustained practical and theoretical work on granular and particle-based synthesis. Roads's contribution with pulsar synthesis specifically was to identify a parametric space within the particle paradigm that had not been systematically explored: the independent control of pulsaret waveform, pulsaret envelope, and train characteristics (fundamental frequency, density, regularity). The technique draws on classical signal processing concepts (pulse trains, duty cycle, formant synthesis) but reconfigures them within the {% xref "microsound", "microsound" %} framework.
+**Microsound (1946-2001).** Dennis Gabor proposed that any sound can be decomposed into elementary {% xref "acoustical-quanta", "acoustical quanta" %} -- short time-frequency atoms, finite in both time and frequency, occupying a cell in the joint time-frequency plane whose minimum area is bounded by the uncertainty principle (Gabor 1946, 1947). Iannis Xenakis gave the particle paradigm its first compositional framework with {% xref "granular-synthesis", "granular synthesis" %}. Pulsar synthesis "belongs to a larger family of microsonic or particle synthesis techniques" (Roads 2001), but within this family its parentage is specific: it descends from the impulse and formant traditions above, not from the granulation of sampled sound.
 
-The following SC2 code is the original basic pulsar synthesis instrument by Curtis Roads (1997). It declares wavetables for the pulsaret waveform, amplitude, fundamental frequency, formant frequency, and spatial position. Each parameter is read from a control table via `Ktransient`, and `Apulse` generates the pulsarets. The binary `.Synth` file also contains the wavetable data itself (waveform, envelopes, control trajectories) as embedded float arrays.
+**Curtis Roads (1991-2001)** developed pulsar synthesis from an initial implementation in James McCartney's Synth-O-Matic (1991), used to compose *Clang-tint* (1994), through a SuperCollider 1 instrument coded with Stephen T. Pope (1997), to the PulsarGenerator application built with Alberto de Campo in SuperCollider 2 (1999-2001). His contribution was to identify a parametric space these traditions had left unexplored: the independent control of pulsaret waveform, pulsaret envelope, and train characteristics (fundamental frequency, formant frequency, density), reconfigured as digital wavetables within the {% xref "microsound", "microsound" %} framework. As a digital technique it "accrues the advantages of precise programmable control, waveform flexibility, graphical interface, and extensibility" (Roads 2001).
+
+The following SC2 code is the original basic pulsar synthesis instrument created by Curtis Roads with Stephen T. Pope (1997). It declares wavetables for the pulsaret waveform, amplitude, fundamental frequency, formant frequency, and spatial position. Each parameter is read from a control table via `Ktransient`, and `Apulse` generates the pulsarets. The binary `.Synth` file also contains the wavetable data itself (waveform, envelopes, control trajectories) as embedded float arrays.
 
 <figure class="code-historical">
 
@@ -114,17 +126,19 @@ A pulsaret is the product of two lookup tables: a *pulsaret waveform* table and 
 This separation of waveform and envelope into independently controllable tables is a defining architectural feature of pulsar synthesis. It allows the composer to design timbres by combining any waveform with any envelope, producing a parametric space far larger than either table alone. Where granular synthesis derives timbral variation primarily from the choice of source material, grain duration, and grain density, pulsar synthesis adds the independent axes of waveform shape, envelope shape, and decoupled formant frequency, expanding the space of achievable timbres without requiring any source material at all.
 
 <figure>
-  <img src="/img/handbook/pulsar-synthesis/catalogue of envelopes.png" alt="A catalogue of standard pulsaret envelopes: (a) Rectangular, (b) Gaussian, (c) Linear Decay, (d) Exponential Decay, (e) Linear Attack with duty cycle, (f) Exponential Attack, (g) FOF envelope, (h) Bipolar modulator.">
+  <img src="/img/handbook/catalogue of envelopes.png" alt="A catalogue of standard pulsaret envelopes: (a) Rectangular, (b) Gaussian, (c) Linear Decay, (d) Exponential Decay, (e) Linear Attack with duty cycle, (f) Exponential Attack, (g) FOF envelope, (h) Bipolar modulator.">
   <figcaption>Fig. 02. A standard catalogue of pulsaret envelopes. (a) Rectangular. (b) Gaussian. (c) Linear Decay. (d) Exponential Decay. <em>b</em> -- steepness of an exponential curve. (e) Linear attack with duty cycle <em>d</em>. (f) Exponential attack. <em>g</em> -- steepness of an exponential curve. (g) FOF envelope. (h) Bipolar modulator. Source: Roads (2020), figures conversion Marcin Pietruszewski.</figcaption>
 </figure>
 
 <figure>
-  <img src="/img/handbook/pulsar-synthesis/catalogue of pulsarets .png" alt="Examples of pulsaret waveforms: (a) Sine, (b) Multicycle Sine, (c) Gaussian Limited Sine, (d) Saw, (e) Gray Noise.">
+  <img src="/img/handbook/catalogue of pulsarets .png" alt="Examples of pulsaret waveforms: (a) Sine, (b) Multicycle Sine, (c) Gaussian Limited Sine, (d) Saw, (e) Gray Noise.">
   <figcaption>Fig. 03. Examples of pulsaret waveforms. In practice, any waveform can be used. (a) Sine. (b) Multicycle Sine. (c) Gaussian Limited Sine. (d) Saw. (e) Gray Noise. Source: Roads (2020), figures conversion Marcin Pietruszewski.</figcaption>
 </figure>
 
 The choice of envelope determines the spectral bandwidth of the pulsaret: a narrow envelope (such as a Gaussian or exponential decay) concentrates energy around the formant frequency and produces a sharp resonant peak, while a wide envelope approaching the full period yields a nearly pure tone. The choice of waveform determines the fine spectral structure within that bandwidth -- a sine produces a single formant peak, a sawtooth fills in the harmonics, and a noise waveform distributes energy stochastically. Because the two tables are multiplied sample by sample, every combination of waveform and envelope produces a distinct spectral profile. The catalogues above show standard shapes, but in practice both tables can hold any arbitrary curve, hand-drawn or algorithmically generated.
 
+<div class="demo-with-margin">
+<span class="margin-note">The pulsaret built here can be played in <a href="#demo-02">Demo 02</a> below: press 'use builder' there to load your waveform and envelope into the running synth.</span>
 <div class="pulsaret-builder" id="demo-01">
   <div class="demo-label">pulsaret builder</div>
   <div class="builder-row">
@@ -143,6 +157,7 @@ The choice of envelope determines the spectral bandwidth of the pulsaret: a narr
   </div>
   <div class="builder-hint">draw directly on the waveform and envelope canvases, or select a preset from the dropdown</div>
 </div>
+</div>
 <div class="demo-caption">Demo 01. Interactive pulsaret construction. Each table stores 2048 floating-point values representing one cycle of an arbitrary shape. The pulsaret waveform (left) is multiplied sample-by-sample with the pulsaret envelope (right) to produce the resulting pulsaret (below). Draw on either canvas or select from the presets.</div>
 
 ## How it works
@@ -158,12 +173,12 @@ A pulsar synthesiser generates sound through the following process:
 4. **Inter-pulse silence**: The gap between successive pulsarets (the silent portion of each period) is a defining feature. As the duty cycle decreases, more silence enters the signal, and the spectrum broadens. At the limit, an infinitely narrow pulsaret produces a click train with a flat spectrum.
 
 <figure>
-  <img src="/img/handbook/pulsar-synthesis/single-pulsar.png" alt="A single pulsar consisting of an arbitrary pulsaret waveform w with a duration d followed by an interval of silence s, within a period p.">
+  <img src="/img/handbook/single-pulsar.png" alt="A single pulsar consisting of an arbitrary pulsaret waveform w with a duration d followed by an interval of silence s, within a period p.">
   <figcaption>Fig. 04. A single pulsar consists of an arbitrary pulsaret waveform <em>w</em> with a duration <em>d</em> followed by an interval of silence <em>s</em>. Source: Roads (2020), figures conversion Pietruszewski.</figcaption>
 </figure>
 
 <figure>
-  <img src="/img/handbook/pulsar-synthesis/pulsar-train.png" alt="The succession of pulses forming a pulsar train, showing three pulsarets with varying duty cycles within successive periods.">
+  <img src="/img/handbook/pulsar-train.png" alt="The succession of pulses forming a pulsar train, showing three pulsarets with varying duty cycles within successive periods.">
   <figcaption>Fig. 05. The succession of pulses is called the pulsar train. As the duty cycle <em>d</em> decreases relative to the period <em>p</em>, the spectrum broadens. Source: Roads (2020), figures conversion Pietruszewski.</figcaption>
 </figure>
 
@@ -237,7 +252,7 @@ z.set(\gate, 0);
 
 <div class="demo-with-margin">
 <span class="margin-note">Edit the pulsaret waveform and envelope in <a href="#demo-01">Demo 01</a> above, then press 'use builder' to hear the result here.</span>
-<div class="synth-demo" data-synth="handbook_pulsar" data-mode="gate" data-buffers='[{"bufnum":0,"file":"pulsar-wave.wav"},{"bufnum":1,"file":"pulsar-env.wav"}]'>
+<div class="synth-demo" id="demo-02" data-synth="handbook_pulsar" data-mode="gate" data-buffers='[{"bufnum":0,"file":"pulsar-wave.wav"},{"bufnum":1,"file":"pulsar-env.wav"}]'>
   <div class="demo-header">
     <span class="demo-label">demo</span>
     <button class="demo-boot">boot audio</button>
@@ -274,21 +289,98 @@ z.set(\gate, 0);
 
 ### Pulsar Generator (PG)
 
-The <a href="https://www.curtisroads.net/software">Pulsar Generator</a> was developed by Curtis Roads and Alberto de Campo in SuperCollider 2 at the University of California, Santa Barbara. It is the first dedicated software instrument for pulsar synthesis, providing wavetable-driven control over all core parameters: fundamental frequency, formant frequency, pulsaret waveform and envelope selection, amplitude, and spatial position. The interface extends the basic synthesis engine with pulsar masking (burst, channel, and stochastic masking modes), convolution with sampled sounds, and multi-channel mixing.
+The <a href="https://www.curtisroads.net/software">Pulsar Generator</a> was developed by Curtis Roads and Alberto de Campo in SuperCollider 2 at the University of California, Santa Barbara, and distributed by CREATE. It is the first instrumental encapsulation of the pulsar synthesis technique, providing wavetable-driven control over all core parameters: pulsar train duration, fundamental and formant frequency envelopes, pulsaret waveform and envelope, amplitude, and spatial path. The interface extends the basic synthesis engine with pulsar masking (burst, channel, and stochastic masking modes), convolution with sampled sounds, and multi-channel mixing (Fig. 07).
+
+The program generates three simultaneous pulsar trains sharing one fundamental frequency table, each with independent formant, panning, and amplitude tables. This design dates back to Roads's first SuperCollider 1 sketches of 1997, where the configuration was called "additive": a unified clocking mechanism synchronises all three trains from a single fundamental frequency cycle, which around 2000 also kept processing costs low. The result is a conception of polyphony specific to pulsar synthesis -- not multiple independent voices but multiple spectral-spatial interpretations of a single temporal stream (Pietruszewski 2024, 2026). The original SC1 script survives (Fig. 06): three `Apulse` generators read the same pulsaret waveform and are driven by one shared fundamental frequency envelope, while each follows its own formant and spatial position envelope.
+
+<figure class="code-historical">
+
+```lua
+-- P U L S A R  S Y N T H E S I S
+-- Copyright 1997 Curtis Roads
+
+-- An additive pulsar generator. The pulsar streams share a common
+-- fundamental frequency and waveform, but follow different formant
+-- and spatial envelopes.
+
+-- Declare the stereo output channels
+defaudioout L, R;
+
+-- Declare the wavetable and envelopes
+deftable wave, ampl, fundamental, formant1, formant2, formant3,
+    spatial_position1, spatial_position2, spatial_position3;
+
+ -- Pulsar instrument
+start {
+
+    -- Declare local variables
+    var osc, a_env, fun_env,
+        form_env1, form_env2, form_env3,
+        pos_env1, pos_env2, pos_env3,
+        dur;
+
+    dur = 30.0;
+
+    -- Overall amplitude envelope
+    a_env = Ktransient(ampl, dur, 1, 0, `dspRemove);
+
+    -- Fundamental frequency envelope
+    fun_env = Ktransient(fundamental, dur, 1, 0, `dspRemove);
+
+    -- Formant envelopes
+    form_env1 = Ktransient(formant1, dur, 1, 0, `dspRemove);
+    form_env2 = Ktransient(formant2, dur, 1, 0, `dspRemove);
+    form_env3 = Ktransient(formant3, dur, 1, 0, `dspRemove);
+
+    pos_env1 = Ktransient(spatial_position1, dur, 1, 0, `dspRemove);
+    pos_env2 = Ktransient(spatial_position2, dur, 1, 0, `dspRemove);
+    pos_env3 = Ktransient(spatial_position3, dur, 1, 0, `dspRemove);
+
+    osc1 = Apulse(wave, 0, 0);
+    osc2 = Apulse(wave, 0, 0);
+    osc3 = Apulse(wave, 0, 0);
+
+    {  (osc1.value(fun_env.value, form_env1.value) *! a_env.value)
+                .pan2out(pos_env1.value, L, R);
+       (osc2.value(fun_env.value, form_env2.value) *! a_env.value)
+                .pan2out(pos_env2.value, L, R);
+       (osc3.value(fun_env.value, form_env3.value) *! a_env.value)
+                .pan2out(pos_env3.value, L, R);
+
+    }.dspAdd;
+
+}
+```
+
+<figcaption>Fig. 06. Additive pulsar generator in SuperCollider 1 (<code>Pulsar_additive.sc</code>, 1997). Three pulsar streams share a common fundamental frequency envelope and pulsaret waveform but follow different formant and spatial envelopes -- the three-train architecture later encapsulated in the PulsarGenerator application. Source: Curtis Roads (1997).</figcaption>
+</figure>
+
+Every control object in the PG is a wavetable: thirteen tables in all, each stored as an array of 2048 floating-point values and presented through an identical graphic editor regardless of its temporal level of operation. The pulsaret waveform and envelope operate at the micro scale; the formant, panning, and amplitude tables shape the train over durations of seconds to a minute. The uniform table structure offers a single control model across time scales, mobilising a view of composition as creative grafting between temporal resolutions (Pietruszewski 2024). Roads calls this concept "graphical synthesis", and it connects the PG to earlier experiments in optical sound synthesis and to Xenakis's UPIC. Editing operations reinforce the cross-scale identity: de Campo implemented clipboard functions that mix or multiply the contents of one wavetable into another with automatic range scaling, so an amplitude envelope can be imposed directly onto a formant trajectory (Roads 2001, PG manual). Parameter states are stored as *settings* in a bank of sixteen slots, with variable-rate crossfading between them -- a scheme that, as Roads notes, "takes performance with PulsarGenerator to another level of musical complexity" (Roads 2001, <em>Microsound</em>).
+
+The implementation is compact: the entire program, including the graphical interface, required fewer than 1,500 lines of SuperCollider 2 code, with McCartney's real-time engine calculating the samples. Particle scheduling dominates the computational cost -- at infrasonic emission rates the PG used under 4% of a 500 MHz PowerPC G4; a three-formant instrument at a 2 kHz fundamental, emitting six thousand pulsars per second, consumed roughly 45% (Roads 2001, <em>Microsound</em>).
+
+<div class="demo-with-margin">
+<span class="margin-note">Listen: Schmickler, <a href="https://editionsmego.bandcamp.com/album/altars-of-science"><em>Altars of Science</em></a> (Editions Mego, 2007); Hecker, <em>Pulsar Wg'lett</em> on <a href="http://florianhecker.blogspot.com/2006/12/release-recordings-for-rephlex.html"><em>Recordings for Rephlex</em></a> (Rephlex, 2006).</span>
+
+The PG was thus shaped by the material conditions of computing circa 2000: the processing limits of Mac OS 9 and the buffer management strategies of that era. The 2048-point table and the quantization of parameter updates to the emission rate were pragmatic responses to these constraints, but they simultaneously encode a specific temporal ontology -- musical time as discrete, recursive, and quantized -- in which the basic unit of temporal organization is not the continuous signal but the discrete event (Pietruszewski 2026). The design also embeds a compositional stance: the PG emphasises micro- and meso-temporal organisation and was conceived as a generator of sound material to be edited, transformed, and mixed in later stages, rather than a composer of finished macroform. Haworth (2015) reads the PG, alongside GENDYN, as a cultural object: a synthesis procedure functioning as a text within the discursive and aesthetic practices of electroacoustic music. Its recorded traces bear this out, from Marcus Schmickler's transformation of PG material on <em>Altars of Science</em> (2007) to Florian Hecker's presentation of raw, unprocessed PG output in <em>Pulsar Wg'lett</em> (2006).
+
+</div>
 
 <figure>
-  <img src="/img/handbook/pulsar-synthesis/pulsar-generator-diagram.png" alt="Diagrammatic representation of the Pulsar Generator program showing signal flow from envelope generators and pulsaret waveform through the Pulsar Generator, pulsar masking, and convolution with sampled sounds to output.">
-  <figcaption>Fig. 06. The Pulsar Generator program by Curtis Roads and Alberto de Campo. The system combines amplitude, fundamental frequency, and formant envelope generators with pulsaret waveform and envelope selection, pulsar masking (burst, channel, stochastic), convolution with sampled sounds, and mixing. Source: Roads (2020), figures conversion Pietruszewski.</figcaption>
+  <img src="/img/handbook/pulsar-generator-diagram.png" alt="Diagrammatic representation of the Pulsar Generator program showing signal flow from envelope generators and pulsaret waveform through the Pulsar Generator, pulsar masking, and convolution with sampled sounds to output.">
+  <figcaption>Fig. 07. The Pulsar Generator program by Curtis Roads and Alberto de Campo. The system combines amplitude, fundamental frequency, and formant envelope generators with pulsaret waveform and envelope selection, pulsar masking (burst, channel, stochastic), convolution with sampled sounds, and mixing. Source: Roads (2020), figures conversion Pietruszewski.</figcaption>
 </figure>
 
 <figure>
-  <img src="/img/handbook/pulsar-synthesis/PG_main Interface.jpg" alt="Pulsar Generator main interface showing a generalised table type control over pulsaret fundamental frequency with three separate tables for formant frequency, spatial position and amplitude.">
-  <figcaption>Fig. 07. Pulsar Generator -- a global view of the graphic interface. Notice a generalised table type control over pulsaret fundamental frequency with three separate tables for formant frequency, spatial position and amplitude. The colour scheme and basic layout of the interface were inspired by the look of audio measurement equipment by Brüel&Kjær.</figcaption>
+  <img src="/img/handbook/PG_main Interface.jpg" alt="Pulsar Generator main interface showing a generalised table type control over pulsaret fundamental frequency with three separate tables for formant frequency, spatial position and amplitude.">
+  <figcaption>Fig. 08. Pulsar Generator -- a global view of the graphic interface. Notice a generalised table type control over pulsaret fundamental frequency with three separate tables for formant frequency, spatial position and amplitude. The colour scheme and basic layout of the interface were inspired by the look of audio measurement equipment by Brüel&Kjær.</figcaption>
 </figure>
 
 ### New Pulsar Generator (nuPG)
 
 The New Pulsar Generator (nuPG) is a reimplementation and extension of the Pulsar Generator developed by Marcin Pietruszewski (2021). Built in SuperCollider 3, nuPG preserves the core parametric architecture of the original while expanding the synthesis engine and interface.
+
+The reimplementation retains the PG's 2048-point table structure and emission-rate quantization even though contemporary systems could support arbitrary table sizes and sub-sample precision. These constraints persist as conceptual commitments rather than technical necessities: to discard them would be to discard the conception of digital temporality that makes pulsar synthesis distinctive (Pietruszewski 2026). Where the original PG was a closed application whose synthesis logic sat behind a graphical interface, nuPG exposes that logic as readable, modifiable code, making the historical design decisions available for inspection through use. The design lineage connecting Xenakis's UPIC, the PulsarGenerator, and nuPG shows digital instruments carrying their design histories as active artifacts (Pietruszewski 2020).
 
 ## Aesthetics and cultural context
 
