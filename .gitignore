@@ -1,2 +1,5 @@
 .DS_Store
 .claude/
+
+# screen recordings, kept locally
+*.mp4
