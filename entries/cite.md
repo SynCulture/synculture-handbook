@@ -31,7 +31,10 @@ Cite the Handbook itself only when the reference is to the publication rather
 than to anything argued in it. A claim, a description of a technique, or a piece
 of code belongs to the entry that carries it, and should be cited from there.
 
-<p class="citation-example"><em>The Synthesis Handbook</em>, edition of October 1, 2026. SYNCULTURE. https://synculture.net/handbook/</p>
+The Handbook's edition is the date of its most recent entry, since that is what
+changes when the Handbook changes.
+
+{% citeHandbook site.url %}
 
 ## Editions
 
