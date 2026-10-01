@@ -235,7 +235,7 @@ As the duty cycle shrinks relative to the period, more silence enters the signal
   </tbody>
 </table>
 
-Fundamental and formant frequency are decoupled, which permits effects analogous to the {% xref "vocoder", "source-filter model" %} of speech: pitch varies independently of resonant structure. Train density is the odd one out in this table. The Pulsar Generator implements it as pulsar masking and nuPG as a pulse probability mask, but the browser instrument below has no control for it, so in the cells that follow every period carries a pulsaret.
+Fundamental and formant frequency are decoupled, which permits effects analogous to the {% xref "vocoder", "source-filter model" %} of speech: pitch varies independently of resonant structure. Train density is the odd one out in this table. The Pulsar Generator implements it as pulsar masking and nuPG as a pulse probability mask, but the browser instrument below has no control for it, so in the cells that follow every period carries a pulsaret. The downloadable file at the end of the entry does have one, in the two forms the PG implements for a single train, burst and stochastic.
 
 ## Web implementation
 
@@ -850,3 +850,13 @@ local equivalents, plus what the browser cannot offer. It boots and allocates
 its own buffers, carries a catalogue of pulsaret waveforms and envelopes after
 Roads's figures 4.11 and 4.12 that can be swapped under a sounding instrument,
 plots the tables with `.plot`, opens a slider panel, and records to disk.
+
+It also carries the one part of the technique the cells leave out: pulsar
+masking, in the two forms the Pulsar Generator implements for a single train.
+Burst masking alternates <em>b</em> emitted periods with <em>r</em> silent ones,
+and stochastic masking throws a weighted coin once per period, its probability
+held as a fifth control table alongside the four the cells use. Both delete
+pulsarets rather than quieten them, so the train keeps the period it would have
+had and loses emissions from it: at a 100 Hz fundamental a ratio of 1:7 leaves
+one pulsaret every 80 ms, which is the subharmonic at <em>f</em>/(<em>b</em> +
+<em>r</em>) described above.
