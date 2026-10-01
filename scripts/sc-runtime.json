@@ -1,0 +1,37 @@
+{
+  "source": "https://sc.dennis-scheiba.com/",
+  "retrieved": "2026-09-20",
+  "provenance": "Demo build by Dennis Scheiba. Exact source commit is not advertised by the download endpoint; these hashes pin the local experiment, not a verified source build. See SuperCollider PR #7440.",
+  "files": [
+    {
+      "name": "sclang.data",
+      "url": "https://sc.dennis-scheiba.com/sclang.data",
+      "sha256": "2657b34d81192c78a0d312d5be0ff0574d058795a2c54b09c0e37c4e312669eb",
+      "bytes": 1996252
+    },
+    {
+      "name": "sclang.js",
+      "url": "https://sc.dennis-scheiba.com/sclang.js",
+      "sha256": "f03587d81476dc3013b3c79b420d47bf38727495d479f7d2058d6f663010f4e7",
+      "bytes": 230966
+    },
+    {
+      "name": "sclang.wasm",
+      "url": "https://sc.dennis-scheiba.com/sclang.wasm",
+      "sha256": "f5d985007fb0f65c3cf64290740cac959bb92b3345c842fb6fb3e0d23a43798e",
+      "bytes": 5133181
+    },
+    {
+      "name": "scsynth.js",
+      "url": "https://sc.dennis-scheiba.com/scsynth.js",
+      "sha256": "90cac05342409bc5cdb257fef3882663549c1330c761ef30997a7f34457ce01f",
+      "bytes": 156638
+    },
+    {
+      "name": "scsynth.wasm",
+      "url": "https://sc.dennis-scheiba.com/scsynth.wasm",
+      "sha256": "51f33a49c186c21f8face0377b5f3f392e851f1582d975b054bf622bf5377269",
+      "bytes": 3464960
+    }
+  ]
+}

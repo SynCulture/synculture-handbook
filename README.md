@@ -10,6 +10,9 @@ code/         Downloadable .scd per entry, adapted for a local SuperCollider
 img/          Figures and diagrams, organised by entry slug
 samples/      Audio wavetable files (.wav) for interactive demos
 synthdefs/    Compiled SuperCollider SynthDef binaries (.scsyndef) for WASM playback
+js/           The live session: runtime, workspace, examples, instruments
+runtime/sc/   SuperCollider compiled to WebAssembly (sclang and scsynth)
+scripts/      Runtime fetch with SHA-256 pinning
 handbook.json Collection metadata
 ```
 
@@ -70,9 +73,77 @@ None of that works in a local SuperCollider. The downloadable file is the same
 material adapted to run locally, with whatever extras the browser cannot offer
 (GUI windows, plotting, recording, larger catalogues).
 
+## The live session
+
+Entries with `session: true` in their frontmatter run SuperCollider in the
+reader's browser. Both halves are WebAssembly, with no server process and no
+network round trip: `runtime/sc/` holds `sclang.wasm` with its class library in
+`sclang.data`, and `scsynth.wasm`.
+
+The two are joined directly, in `js/sc-runtime.mjs`:
+
+```js
+lang.onOsc       = bytes => synth.sendOsc(new Uint8Array(bytes));
+synth.onOscReply = bytes => lang.sendOsc(new Uint8Array(bytes));
+```
+
+sclang's outbound OSC is handed to scsynth and the replies handed back. Because
+the bridge carries both directions, `s.waitForBoot`, `s.sync`, `/d_recv` and
+node notifications behave as they do in a desktop session.
+
+| file | |
+|---|---|
+| `js/sc-runtime.mjs` | Boots both modules, bridges OSC, owns the audio graph, scope and peak meter. Runs inside one iframe, so removing the iframe tears the session down. |
+| `js/sc-workspace.mjs` | The parent side: editable cells, drafts, the monitoring panel, curve plotting, the postMessage protocol. |
+| `js/sc-examples.mjs` | The published source of each cell, keyed by the id used in an entry. |
+| `js/pulsaret-builder.js` | The drawable waveform and envelope canvases. |
+
+Three routes reach the server, deliberately kept apart. Evaluating a cell goes
+through `lang.runCode`. Moving a slider sends a hand-built `/n_set` straight to
+scsynth, bypassing the interpreter, which is why dragging recompiles nothing.
+Drawing on a canvas sends `/b_setn` in 512-value chunks straight into the
+buffer. Since sclang has no structured return path, the runtime scrapes
+token-prefixed markers out of the post window and strips them before display:
+`HB_READY_`, `HB_NODE_=`, `HB_BUFS_=`, plus `HB_TABLE` for plottable curves and
+`HB_LOOP` for the traversal playhead.
+
+### Cross-origin isolation is required
+
+The runtime needs `SharedArrayBuffer`, which browsers grant only to cross-origin
+isolated documents. Any host serving this must send, on the handbook and runtime
+paths:
+
+```
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp
+Cross-Origin-Resource-Policy: same-origin   (runtime only)
+```
+
+Without them `sc-runtime.mjs` refuses to start, by design, rather than failing
+obscurely later. The website that consumes this repository sets them in its own
+`src/_headers`, since they are a deploy concern rather than content.
+
+### Rebuilding the runtime
+
+The binaries are committed so a checkout runs without fetching anything. To
+re-fetch and verify them against the recorded hashes:
+
+```bash
+node scripts/setup-sc.mjs
+```
+
+It refuses any download whose SHA-256 does not match `scripts/sc-runtime.json`.
+See `runtime/sc/NOTICE.txt` for provenance and licensing: these are pinned
+binary snapshots of an experimental, unmerged SuperCollider branch, not a
+reproducible build from source. `SUPERCOLLIDER-INTEGRATION.md` holds the design
+brief and the acceptance checks still outstanding.
+
 ## Integration
 
-This repository is consumed as a git submodule by the SYNCULTURE website. The website provides the rendering infrastructure (Eleventy templates, CSS, JavaScript, SuperSonic WASM runtime).
+This repository is consumed as a git submodule by the SYNCULTURE website, which
+provides the rendering infrastructure: Eleventy templates, CSS, and the site's
+own JavaScript. The handbook carries its own live-session machinery, so the
+entries, the SuperCollider they run, and the runtime that runs it stay together.
 
 ## Adding an entry
 

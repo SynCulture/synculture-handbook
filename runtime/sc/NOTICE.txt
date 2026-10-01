@@ -1,0 +1,23 @@
+SuperCollider WebAssembly runtime
+=================================
+
+These files are builds of SuperCollider (sclang and scsynth) compiled to
+WebAssembly. SuperCollider is free software, licensed under the GNU General
+Public License version 3 or later.
+
+    Upstream project   https://github.com/supercollider/supercollider
+    WebAssembly work   https://github.com/supercollider/supercollider/pull/7440
+    Build notes        https://github.com/capital-G/supercollider/blob/wasm-sclang/README_WASM.md
+
+The binaries here were retrieved on 2026-09-20 from https://sc.dennis-scheiba.com/,
+a demonstration site published by Dennis Scheiba. That endpoint does not
+advertise the source commit it was built from, so these are pinned binary
+snapshots rather than a reproducible build from source. Their SHA-256 hashes are
+recorded in scripts/sc-runtime.json in this repository, and scripts/setup-sc.mjs
+refuses any download whose hash does not match.
+
+Corresponding source for these binaries is the SuperCollider source tree at the
+pull request above. Anyone wishing to rebuild them should start there.
+
+This runtime is experimental. The pull request is open and unmerged at the time
+of writing, and the builds may change or stop working without notice.
