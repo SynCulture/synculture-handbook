@@ -39,7 +39,7 @@ references:
   - "Jung An Tagen, and Frye, E. (2020). <em>Pulsar Acid</em>."
   - "Jung An Tagen, and Frye, E. (2022). <em>Phantom Acid</em>. Superpang."
   - "Choi, K. (2026). <em>Order and Interstices</em>. Rope Editions."
-  - "Rawlinson, J. (2021). <em>Pulsar Retcon</em>. Edinburgh: pixelmechanics."
+  - "Rawlinson, J. (2021). <em>Pulsar Retcon</em>. Superpang, SP63."
   - "Schmickler, M. (2007). <em>Altars of Science</em>. Editions Mego."
   - "Schmickler, M. (2009). <em>Bonner Durchmusterung</em>. Sonification by Alberto de Campo, projections by Carsten Goertz, supervision by Michael Geffert. Premiered May 2009, Kunst- und Ausstellungshalle der Bundesrepublik Deutschland, Bonn."
   - "Hecker, F. (2006). Pulsar Wg'lett. On <em>Recordings for Rephlex</em>. Rephlex."
@@ -804,7 +804,8 @@ came out of the same circle.
 
 Jules Rawlinson has taken it in a direction of his own, across
 <a href="https://pixelmechanics.bandcamp.com/album/pulsar-retcon"><em>Pulsar Retcon</em></a>
-(2021), *Pulsar Hexerei*, *Pulsar Threading* and a run of live performances.
+(Superpang SP63, 2021), *Pulsar Hexerei*, *Pulsar Threading* and a run of live
+performances.
 His method inverts the usual order. Rather than composing with the program, he
 records improvisations from it and then treats the result as a corpus to be
 played: "improvised buffer scratching, corpus scrubbing and waveform scuffing of
