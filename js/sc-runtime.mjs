@@ -144,12 +144,51 @@ function nodeSetMessage(node, params) {
   return oscPacket([oscString('/n_set'), oscString(tags), ...body]);
 }
 
+// scsynth creates its own AudioContext from inside the WebAssembly, seconds
+// after the tap that started the session, and a context created without user
+// activation begins suspended. Desktop browsers let it be resumed anyway; iOS
+// does not — resume() there is only honoured during activation, and the tap was
+// spent compiling 8 MB of WebAssembly. A suspended context never runs its
+// worklet, scsynth IS that worklet, so the server never boots and the session
+// times out with the language already up.
+//
+// The tap therefore has to happen in this document, which is the one that owns
+// the context. The parent reveals this frame when it hears 'audio-blocked'.
+async function unlockAudio() {
+  await context.resume().catch(() => {});
+  if (context.state === 'running') return;
+  emit('audio-blocked');
+  document.body.innerHTML =
+    '<button type="button" id="unlock">Tap to start the audio engine</button>';
+  const button = document.getElementById('unlock');
+  await new Promise(resolve => {
+    button.addEventListener('click', async () => {
+      // Inside the gesture, which is the whole point of this detour.
+      await context.resume().catch(() => {});
+      if (context.state !== 'running') { button.textContent = 'Audio still blocked — tap again'; return; }
+      document.body.replaceChildren();
+      emit('audio-unblocked');
+      resolve();
+    });
+  });
+}
+
 async function attachAudio() {
   const deadline = performance.now() + 15000;
-  while (performance.now() < deadline) {
+  // The context first, on its own. Waiting for the worklet node alongside it
+  // deadlocks on iOS: a suspended context never starts its worklet, so the node
+  // never appears, and the wait that was meant to be a formality runs out while
+  // the thing that would have fixed it sits behind the wait.
+  while (performance.now() < deadline && !context) {
     context = synth.getAudioContext();
+    if (!context) await new Promise(resolve => setTimeout(resolve, 50));
+  }
+  if (!context) throw new Error('Audio server did not become ready. Restart the session.');
+  await unlockAudio();
+
+  while (performance.now() < deadline) {
     const node = synth.getWorkletNode();
-    if (context && node) {
+    if (node) {
       gain = context.createGain();
       gain.gain.value = muted ? 0 : master;
       analyser = context.createAnalyser();
@@ -172,7 +211,6 @@ async function attachAudio() {
       node.connect(gain);
       gain.connect(analyser);
       analyser.connect(context.destination);
-      await context.resume();
       emit('audio', { state: context.state, sampleRate: context.sampleRate });
       context.onstatechange = () => emit('audio', { state: context.state, sampleRate: context.sampleRate });
       // A timer, not rAF: this document sits in a hidden container, and a
