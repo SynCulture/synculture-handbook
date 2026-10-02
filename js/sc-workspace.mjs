@@ -323,6 +323,14 @@ examples.forEach((example, index) => {
   });
 });
 
+// Reaches into the runtime frame, which is same-origin, so the whole report can
+// be had from the page's own console without hunting for the right frame.
+window.scReport = () => {
+  const frame = document.querySelector('#runtime-host iframe');
+  if (!frame?.contentWindow?.scAudioReport) return 'runtime frame not ready';
+  return frame.contentWindow.scAudioReport();
+};
+
 function startSession() {
   if (starting) return;
   if (!crossOriginIsolated) { message('Open this local preview using npm run preview. The language runtime needs isolation headers.', true); return; }

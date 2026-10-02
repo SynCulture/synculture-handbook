@@ -282,6 +282,51 @@ async function attachAudio() {
   throw new Error(`Audio did not become ready after ${bootClock()} (context ${context?.state || 'none'}, worklet ${synth.getWorkletNode() ? 'present' : 'absent'}). Restart the session.`);
 }
 
+// A view of the audio graph from the inspector. The pieces live in module
+// scope, so without this there is no way to ask a running session what its
+// context, its worklet or its analyser are actually doing — which is most of
+// what a silent engine needs to be asked.
+window.scAudioReport = () => {
+  let peak = null, rms = null;
+  if (analyser) {
+    const samples = new Float32Array(analyser.fftSize);
+    analyser.getFloatTimeDomainData(samples);
+    let high = 0, sum = 0;
+    for (let i = 0; i < samples.length; i++) {
+      const value = Math.abs(samples[i]);
+      if (value > high) high = value;
+      sum += samples[i] * samples[i];
+    }
+    peak = high;
+    rms = Math.sqrt(sum / samples.length);
+  }
+  const node = synth?.getWorkletNode?.() || null;
+  return {
+    context: context ? {
+      state: context.state,
+      sampleRate: context.sampleRate,
+      // A clock that does not advance means the graph is not being pulled,
+      // whatever the state claims.
+      currentTime: Number(context.currentTime.toFixed(3)),
+      destinationChannels: context.destination?.channelCount ?? null,
+      destinationMax: context.destination?.maxChannelCount ?? null,
+    } : null,
+    worklet: node ? {
+      present: true,
+      channelCount: node.channelCount,
+      numberOfOutputs: node.numberOfOutputs,
+      outputChannels: node.channelCountMode,
+    } : { present: false },
+    // Signal actually present at the analyser, which sits after the gain and
+    // before the destination. Zero here with a running context means scsynth
+    // is emitting silence rather than the output being muted downstream.
+    signal: { peak, rms },
+    gain: gain ? gain.gain.value : null,
+    master, muted,
+    ready,
+  };
+};
+
 window.bootServer = async options => {
   if (bootingServer) { post('Use Restart session to change server options.'); return; }
   bootingServer = true;
