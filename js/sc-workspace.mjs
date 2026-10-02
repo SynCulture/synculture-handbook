@@ -13,6 +13,10 @@ const NARROW = window.matchMedia('(max-width: 700px)');
 const draftKey = 'synculture.sc-workspace.v3';
 const editors = new Map();
 let iframe, session, startupTimer, ready = false, starting = false, muted = false;
+// How long the runtime may say nothing before the start counts as stalled.
+// Generous enough to cover the longest single step on a slow phone — compiling
+// the language — without making a genuine hang cost minutes.
+const STARTUP_SILENCE = 75000;
 let postText = '';
 let saveTimer;
 let nodeId = -1;
@@ -342,11 +346,22 @@ function startSession() {
   iframe.src = `/handbook/runtime/?session=${session}`;
   iframe.allow = 'autoplay';
   $('#runtime-host').replaceChildren(iframe);
-  // Four minutes, not one. Ten megabytes of WebAssembly over a phone connection
-  // can spend a minute downloading before a line of it is compiled, and the old
-  // limit was cutting off starts that were merely slow. The post window says
-  // where it has got to, so a wait is legible rather than blank.
-  startupTimer = setTimeout(() => failed('Session startup timed out. Restart to try again; your source edits are preserved.'), 240000);
+  // A deadline on the whole start is the wrong instrument: set short it cuts off
+  // a slow phone, set long it makes every failure cost four minutes before it
+  // admits to being one. What distinguishes the two is not elapsed time but
+  // whether anything is still happening, and the boot now says so at each step.
+  // So the clock watches progress: every line from the runtime restarts it, and
+  // only a silence fails the session.
+  bumpStartup();
+}
+
+// Restarted by every line the runtime posts while the session is coming up.
+function bumpStartup() {
+  if (ready) return;
+  clearTimeout(startupTimer);
+  startupTimer = setTimeout(() => failed(
+    `The session stopped making progress. The post window says where it reached. `
+    + `Restart to try again; your source edits are preserved.`), STARTUP_SILENCE);
 }
 
 function failed(text) {
@@ -364,8 +379,8 @@ function failed(text) {
 addEventListener('message', event => {
   const data = event.data;
   if (event.source !== iframe?.contentWindow || event.origin !== location.origin || data?.channel !== channel || data.token !== session) return;
-  if (data.type === 'post') post(data.text);
-  else if (data.type === 'status') status(data.target, data.state);
+  if (data.type === 'post') { post(data.text); if (starting) bumpStartup(); }
+  else if (data.type === 'status') { status(data.target, data.state); if (starting) bumpStartup(); }
   else if (data.type === 'ready') {
     clearTimeout(startupTimer); starting = false; setReady(true);
     status('language', 'ready'); status('server', 'ready');
