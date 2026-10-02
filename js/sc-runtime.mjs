@@ -346,19 +346,30 @@ window.bootServer = async options => {
 const bootClock = () => `${((performance.now() - bootStarted) / 1000).toFixed(1)}s`;
 let bootStarted = 0;
 
+// Compiling eight megabytes of WebAssembly is one step with nothing to say in
+// the middle of it, and on a cold phone it can run past the silence the page
+// allows before calling the session stalled — so a start that was merely slow
+// was being killed as a hang. Ticking while a step runs keeps that watchdog fed
+// and tells the reader the thing is alive rather than stuck.
+async function withHeartbeat(label, work) {
+  const timer = setInterval(
+    () => post(`[${bootClock()}] still ${label}…`), 12000);
+  try { return await work; } finally { clearInterval(timer); }
+}
+
 async function start() {
   bootStarted = performance.now();
   if (!crossOriginIsolated) throw new Error('Open this preview with npm run preview; the runtime requires isolation headers.');
   post(`Device: ${navigator.hardwareConcurrency || '?'} cores, ${navigator.userAgent.slice(0, 90)}`);
   post(`[${bootClock()}] Fetching the language and server modules (about 10 MB)…`);
-  const [{ default: ScLang }, { default: ScSynth }] = await Promise.all([
-    import('/runtime/sc/sclang.js'), import('/runtime/sc/scsynth.js'),
-  ]);
+  const [{ default: ScLang }, { default: ScSynth }] = await withHeartbeat(
+    'fetching the modules',
+    Promise.all([import('/runtime/sc/sclang.js'), import('/runtime/sc/scsynth.js')]));
   const options = () => ({ locateFile: path => `/runtime/sc/${path}`, onAbort: fail });
   post(`[${bootClock()}] Compiling the language…`);
-  lang = await ScLang(options());
+  lang = await withHeartbeat('compiling the language', ScLang(options()));
   post(`[${bootClock()}] Compiling the synthesis server…`);
-  synth = await ScSynth(options());
+  synth = await withHeartbeat('compiling the synthesis server', ScSynth(options()));
   post(`[${bootClock()}] Starting the interpreter…`);
   lang.printCallback = text => post(text);
   lang.printErrCallback = text => post(text, 'error');
@@ -369,7 +380,12 @@ async function start() {
   lang.bootInterpreter();
   // A phone compiling this much WebAssembly is slow, not broken.
   const deadline = performance.now() + 150000;
+  let spoke = performance.now();
   while (!outputTail.includes('Welcome to SuperCollider')) {
+    if (performance.now() - spoke > 12000) {
+      spoke = performance.now();
+      post(`[${bootClock()}] still starting the interpreter…`);
+    }
     if (performance.now() > deadline) throw new Error(`Language startup timed out after ${bootClock()}. See the post window and restart.`);
     await new Promise(resolve => setTimeout(resolve, 50));
   }
