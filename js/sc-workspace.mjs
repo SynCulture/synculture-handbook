@@ -374,19 +374,6 @@ addEventListener('message', event => {
     post('Language and synthesis server ready.');
     send('master', { value: Number($('#master-volume').value) });
     send('mute', { value: muted });
-  } else if (data.type === 'audio-blocked') {
-    // iOS will not resume an AudioContext created outside a user gesture, and
-    // scsynth is the worklet on that context, so the server cannot boot until
-    // someone taps. The tap has to land in the runtime frame, which is the
-    // document holding the context, so that frame is shown.
-    const host = $('#runtime-host');
-    if (host) { host.hidden = false; host.dataset.unlock = 'true'; }
-    message('One more tap: iOS will not start audio without it.');
-    post('Audio is blocked until the engine is tapped.');
-  } else if (data.type === 'audio-unblocked') {
-    const host = $('#runtime-host');
-    if (host) { host.hidden = true; delete host.dataset.unlock; }
-    message('Starting the synthesis server…');
   } else if (data.type === 'error') failed(data.message);
   else if (data.type === 'node') nodeId = Number(data.id);
   else if (data.type === 'curve') receiveCurve(data);
