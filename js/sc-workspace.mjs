@@ -397,6 +397,13 @@ addEventListener('message', event => {
     post('Language and synthesis server ready.');
     send('master', { value: Number($('#master-volume').value) });
     send('mute', { value: muted });
+    // The pulsaret tables again, now that the session is fully up. They are
+    // first sent when the server announces its buffers, but on some browsers
+    // the instrument still came up reading silence until a preset was touched
+    // by hand, so the reader had to go back to the builder and re-pick a shape
+    // before anything would sound. Sending again here costs two messages and
+    // removes that step: whatever the first attempt raced with is long settled.
+    sendTables();
   } else if (data.type === 'audio-blocked') {
     // The tap has to land in the runtime frame: that document owns the context,
     // and iOS only honours resume() during a gesture in the document that holds
