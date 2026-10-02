@@ -219,7 +219,10 @@ examples.forEach((example, index) => {
   const draft = draftOf(example.id);
   textarea.value = draft ? draft.code : example.code;
   textarea.setAttribute('aria-label', `Cell ${number}: ${example.title}`);
-  host.append(cell);
+  // The host already holds the cell as a static listing, which is what a phone
+  // and a script-off reader get. Replace it rather than append to it: the live
+  // editor is the same cell in another state, not a second copy of it.
+  host.replaceChildren(cell);
   const editor = CodeMirror.fromTextArea(textarea, {
     mode: 'sclang', matchBrackets: true,
     // Narrow viewports wrap: a phone cannot scroll a cell sideways and read the
@@ -780,6 +783,10 @@ function drawScope(samples = lastSamples, peak = lastPeak) {
   lastSamples = samples; lastPeak = peak;
   const canvas = $('#audio-scope');
   const width = canvas.clientWidth, height = canvas.clientHeight;
+  // A scope with no layout box has nothing to draw on, which happens whenever
+  // it sits in a panel that is closed. Leaving early is not only the saving:
+  // the grid below steps by width / 8, and a step of zero never finishes.
+  if (!width || !height) return;
   const ratio = devicePixelRatio || 1;
   if (canvas.width !== Math.round(width * ratio) || canvas.height !== Math.round(height * ratio)) {
     canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio);
