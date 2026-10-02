@@ -144,6 +144,45 @@ function nodeSetMessage(node, params) {
   return oscPacket([oscString('/n_set'), oscString(tags), ...body]);
 }
 
+// resume() settles before the state follows it — about twelve milliseconds on
+// the browsers measured. Reading state the instant the promise resolves calls a
+// context that is about to run blocked, which is the mistake that made the
+// first attempt at this worse than the problem.
+function settled(ctx) {
+  if (ctx.state === 'running') return Promise.resolve();
+  return new Promise(resolve => {
+    const done = () => { ctx.removeEventListener('statechange', done); clearTimeout(timer); resolve(); };
+    const timer = setTimeout(done, 2000);
+    ctx.addEventListener('statechange', done);
+  });
+}
+
+async function askForTap() {
+  emit('audio-blocked');
+  post(`[${bootClock()}] Audio is suspended: iOS wants a tap before it will start.`);
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.id = 'unlock';
+  button.textContent = 'Tap to start the audio engine';
+  document.body.append(button);
+  await new Promise(resolve => {
+    button.addEventListener('click', async () => {
+      button.disabled = true;
+      await context.resume().catch(() => {});
+      await settled(context);
+      if (context.state !== 'running') {
+        button.disabled = false;
+        button.textContent = 'Still blocked — tap again';
+        return;
+      }
+      button.remove();
+      post(`[${bootClock()}] Audio ${context.state}.`);
+      emit('audio-unblocked');
+      resolve();
+    });
+  });
+}
+
 async function attachAudio() {
   const deadline = performance.now() + 45000;
   post(`[${bootClock()}] Waiting for the audio context and worklet…`);
@@ -174,10 +213,16 @@ async function attachAudio() {
       node.connect(gain);
       gain.connect(analyser);
       analyser.connect(context.destination);
-      // Resumed only once the graph is connected, which is where it was and
-      // where it worked. Resuming an unconnected context is not the same act.
-      await context.resume();
+      // Resumed only once the graph is connected. Resuming an unconnected
+      // context is not the same act, and doing it early broke this once.
+      await context.resume().catch(() => {});
+      await settled(context);
       post(`[${bootClock()}] Audio ${context.state}.`);
+      // iOS will not start audio outside a user gesture, and the tap that
+      // started the session was spent compiling the WebAssembly. The context is
+      // held by this document, so the tap has to happen here: the parent shows
+      // this frame, which is otherwise hidden machinery, to carry it.
+      if (context.state !== 'running') await askForTap();
       emit('audio', { state: context.state, sampleRate: context.sampleRate });
       context.onstatechange = () => emit('audio', { state: context.state, sampleRate: context.sampleRate });
       // A timer, not rAF: this document sits in a hidden container, and a

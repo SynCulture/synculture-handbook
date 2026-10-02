@@ -389,6 +389,19 @@ addEventListener('message', event => {
     post('Language and synthesis server ready.');
     send('master', { value: Number($('#master-volume').value) });
     send('mute', { value: muted });
+  } else if (data.type === 'audio-blocked') {
+    // The tap has to land in the runtime frame: that document owns the context,
+    // and iOS only honours resume() during a gesture in the document that holds
+    // it. So the frame, normally hidden, is shown to carry one button.
+    const host = $('#runtime-host');
+    if (host) { host.hidden = false; host.dataset.unlock = 'true'; }
+    message('One more tap: iOS will not start the audio engine without it.');
+    bumpStartup();
+  } else if (data.type === 'audio-unblocked') {
+    const host = $('#runtime-host');
+    if (host) { host.hidden = true; delete host.dataset.unlock; }
+    message('Starting the synthesis server…');
+    bumpStartup();
   } else if (data.type === 'error') failed(data.message);
   else if (data.type === 'node') nodeId = Number(data.id);
   else if (data.type === 'curve') receiveCurve(data);
