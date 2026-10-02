@@ -357,6 +357,22 @@ async function withHeartbeat(label, work) {
   try { return await work; } finally { clearInterval(timer); }
 }
 
+// A missing asset was once answered with the site's HTML and status 200, which
+// is cacheable and was cached for four hours. A browser that met the fault goes
+// on being served that HTML as the module long after the fault is fixed, and
+// closing it does not help: the disk cache survives a restart. One retry past
+// the cache turns a dead session into a slow one, and says what it did.
+async function importRuntime(path) {
+  try {
+    return await import(path);
+  } catch (error) {
+    post(`[${bootClock()}] ${path} did not load (${error?.message || error}).`
+      + ' Retrying past the browser cache.');
+    // Cache-busted, so a poisoned entry cannot answer a second time.
+    return import(`${path}?reload=${Date.now()}`);
+  }
+}
+
 async function start() {
   bootStarted = performance.now();
   if (!crossOriginIsolated) throw new Error('Open this preview with npm run preview; the runtime requires isolation headers.');
@@ -364,7 +380,8 @@ async function start() {
   post(`[${bootClock()}] Fetching the language and server modules (about 10 MB)…`);
   const [{ default: ScLang }, { default: ScSynth }] = await withHeartbeat(
     'fetching the modules',
-    Promise.all([import('/runtime/sc/sclang.js'), import('/runtime/sc/scsynth.js')]));
+    Promise.all([importRuntime('/runtime/sc/sclang.js'),
+                 importRuntime('/runtime/sc/scsynth.js')]));
   const options = () => ({ locateFile: path => `/runtime/sc/${path}`, onAbort: fail });
   post(`[${bootClock()}] Compiling the language…`);
   lang = await withHeartbeat('compiling the language', ScLang(options()));
