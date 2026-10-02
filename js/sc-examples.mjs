@@ -236,7 +236,7 @@ Routine({
     // Single calls, not one program: each line is a decision about the reading.
     lineByLine: true,
     title: "Change the traversal while it runs",
-    description: "Single calls on the setters cell 03 defined. The traversal time is the only control over the reading, and it is signed: -60 crosses the tables backwards in a minute. Nothing is recompiled and the instrument is never restarted. This cell has no Evaluate button, because running every line at once would set the traversal a dozen times over. Put the cursor on a line and press Shift Enter to run that line alone.",
+    description: "Single calls on the setters cell 03 defined. The traversal time is the only control over the reading, and it is signed: -60 crosses the tables backwards in a minute. Nothing is recompiled and the instrument is never restarted. Each call stands in a box of its own, because running them together would set the traversal a dozen times over in one go.",
     code: String.raw`// Faster: the same trajectories, two seconds end to end.
 ~setLoop.value(2);
 
@@ -267,7 +267,7 @@ Routine({
     // a single button to run, so the cell offers none.
     lineByLine: true,
     title: "Rewrite the tables and the particle while they sound",
-    description: "Where cell 04 changes how the tables are read, these calls change what is read: fresh trajectories, then the pulsaret itself. Each writes into a buffer the server is already reading, so nothing is recompiled and the instrument is never restarted. This cell has no Evaluate button either; where a call runs over several lines it is wrapped in brackets, so the cursor anywhere inside runs the whole block. The pulsaret builder above stays live throughout: draw on either canvas while the tables are playing and the new shape is heard on the next pulsar emitted.",
+    description: "Where cell 04 changes how the tables are read, these calls change what is read: fresh trajectories, then the pulsaret itself. Each writes into a buffer the server is already reading, so nothing is recompiled and the instrument is never restarted. Each call stands in a box of its own; where one runs over several lines it is wrapped in brackets and the box holds the whole block. The pulsaret builder above stays live throughout: draw on either canvas while the tables are playing and the new shape is heard on the next pulsar emitted.",
     code: String.raw`// New trajectories, written under the sounding instrument.
 Routine({ ~newTables.value; "Tables rewritten.".postln; }).play(clock: AppClock);
 
