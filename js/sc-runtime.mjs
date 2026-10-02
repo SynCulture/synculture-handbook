@@ -174,7 +174,7 @@ async function unlockAudio() {
 }
 
 async function attachAudio() {
-  const deadline = performance.now() + 15000;
+  const deadline = performance.now() + 45000;
   // The context first, on its own. Waiting for the worklet node alongside it
   // deadlocks on iOS: a suspended context never starts its worklet, so the node
   // never appears, and the wait that was meant to be a formality runs out while
@@ -252,14 +252,26 @@ window.bootServer = async options => {
   } catch (error) { fail(error); }
 };
 
+// The boot moves about ten megabytes of WebAssembly and then compiles it, which
+// on a phone is tens of seconds of nothing. Said out loud, so a slow start can
+// be told apart from a stuck one — by a reader and by whoever they report it to.
+const bootClock = () => `${((performance.now() - bootStarted) / 1000).toFixed(1)}s`;
+let bootStarted = 0;
+
 async function start() {
+  bootStarted = performance.now();
   if (!crossOriginIsolated) throw new Error('Open this preview with npm run preview; the runtime requires isolation headers.');
+  post(`Device: ${navigator.hardwareConcurrency || '?'} cores, ${navigator.userAgent.slice(0, 90)}`);
+  post(`[${bootClock()}] Fetching the language and server modules (about 10 MB)…`);
   const [{ default: ScLang }, { default: ScSynth }] = await Promise.all([
     import('/runtime/sc/sclang.js'), import('/runtime/sc/scsynth.js'),
   ]);
   const options = () => ({ locateFile: path => `/runtime/sc/${path}`, onAbort: fail });
+  post(`[${bootClock()}] Compiling the language…`);
   lang = await ScLang(options());
+  post(`[${bootClock()}] Compiling the synthesis server…`);
   synth = await ScSynth(options());
+  post(`[${bootClock()}] Starting the interpreter…`);
   lang.printCallback = text => post(text);
   lang.printErrCallback = text => post(text, 'error');
   synth.onStdout = text => post(text);
@@ -267,9 +279,10 @@ async function start() {
   lang.onOsc = bytes => synth.sendOsc(new Uint8Array(bytes));
   synth.onOscReply = bytes => lang.sendOsc(new Uint8Array(bytes));
   lang.bootInterpreter();
-  const deadline = performance.now() + 45000;
+  // A phone compiling this much WebAssembly is slow, not broken.
+  const deadline = performance.now() + 150000;
   while (!outputTail.includes('Welcome to SuperCollider')) {
-    if (performance.now() > deadline) throw new Error('Language startup timed out. See the post window and restart.');
+    if (performance.now() > deadline) throw new Error(`Language startup timed out after ${bootClock()}. See the post window and restart.`);
     await new Promise(resolve => setTimeout(resolve, 50));
   }
   emit('status', { target: 'language', state: 'ready' });

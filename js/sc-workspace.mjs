@@ -342,7 +342,11 @@ function startSession() {
   iframe.src = `/handbook/runtime/?session=${session}`;
   iframe.allow = 'autoplay';
   $('#runtime-host').replaceChildren(iframe);
-  startupTimer = setTimeout(() => failed('Session startup timed out. Restart to try again; your source edits are preserved.'), 60000);
+  // Four minutes, not one. Ten megabytes of WebAssembly over a phone connection
+  // can spend a minute downloading before a line of it is compiled, and the old
+  // limit was cutting off starts that were merely slow. The post window says
+  // where it has got to, so a wait is legible rather than blank.
+  startupTimer = setTimeout(() => failed('Session startup timed out. Restart to try again; your source edits are preserved.'), 240000);
 }
 
 function failed(text) {
