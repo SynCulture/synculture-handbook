@@ -144,42 +144,68 @@ function nodeSetMessage(node, params) {
   return oscPacket([oscString('/n_set'), oscString(tags), ...body]);
 }
 
-// resume() settles before the state follows it — about twelve milliseconds on
-// the browsers measured. Reading state the instant the promise resolves calls a
-// context that is about to run blocked, which is the mistake that made the
-// first attempt at this worse than the problem.
+// Observe state independently: a blocked resume promise may never settle.
 function settled(ctx) {
   if (ctx.state === 'running') return Promise.resolve();
   return new Promise(resolve => {
-    const done = () => { ctx.removeEventListener('statechange', done); clearTimeout(timer); resolve(); };
+    const done = () => { ctx.removeEventListener('statechange', changed); clearTimeout(timer); resolve(); };
+    const changed = () => { if (ctx.state === 'running' || ctx.state === 'closed') done(); };
     const timer = setTimeout(done, 2000);
-    ctx.addEventListener('statechange', done);
+    ctx.addEventListener('statechange', changed);
   });
+}
+
+async function resumeAudio(reason) {
+  const ctx = context;
+  let outcome = 'pending';
+  post(`[${bootClock()}] Audio resume (${reason}): ${ctx.state}; gesture ${navigator.userActivation?.isActive ?? 'unknown'}.`);
+  // Call synchronously so a button's activation is still available.
+  try {
+    ctx.resume().then(() => {
+      outcome = 'resolved';
+      post(`[${bootClock()}] Audio resume (${reason}) resolved: ${ctx.state}.`);
+    }, error => {
+      outcome = 'rejected';
+      post(`[${bootClock()}] Audio resume (${reason}) rejected: ${error?.message || error}; state ${ctx.state}.`);
+    });
+  } catch (error) {
+    outcome = 'threw';
+    post(`[${bootClock()}] Audio resume (${reason}) threw: ${error?.message || error}.`);
+  }
+  await settled(ctx);
+  post(`[${bootClock()}] Audio resume check (${reason}): ${outcome}, ${ctx.state}.`);
 }
 
 async function askForTap() {
   emit('audio-blocked');
-  post(`[${bootClock()}] Audio is suspended: iOS wants a tap before it will start.`);
+  post(`[${bootClock()}] Audio is ${context.state}. Tap to retry audio startup.`);
   const button = document.createElement('button');
   button.type = 'button';
   button.id = 'unlock';
   button.textContent = 'Tap to start the audio engine';
   document.body.append(button);
   await new Promise(resolve => {
-    button.addEventListener('click', async () => {
-      button.disabled = true;
-      await context.resume().catch(() => {});
-      await settled(context);
-      if (context.state !== 'running') {
-        button.disabled = false;
-        button.textContent = 'Still blocked — tap again';
-        return;
-      }
+    let finished = false;
+    const running = () => {
+      if (finished || context.state !== 'running') return;
+      finished = true;
+      context.removeEventListener('statechange', running);
       button.remove();
       post(`[${bootClock()}] Audio ${context.state}.`);
       emit('audio-unblocked');
       resolve();
+    };
+    context.addEventListener('statechange', running);
+    button.addEventListener('click', async () => {
+      button.disabled = true;
+      await resumeAudio('tap');
+      running();
+      if (!finished) {
+        button.disabled = false;
+        button.textContent = `Audio ${context.state}: tap to retry`;
+      }
     });
+    running();
   });
 }
 
@@ -191,6 +217,11 @@ async function attachAudio() {
     const node = synth.getWorkletNode();
     if (context && node) {
       post(`[${bootClock()}] Audio context: ${context.state}, ${context.sampleRate} Hz.`);
+      context.addEventListener('statechange', () => {
+        post(`[${bootClock()}] Audio state changed: ${context.state}.`);
+        emit('audio', { state: context.state, sampleRate: context.sampleRate });
+      });
+      node.addEventListener('processorerror', () => fail(new Error('The audio worklet processor failed.')));
       gain = context.createGain();
       gain.gain.value = muted ? 0 : master;
       analyser = context.createAnalyser();
@@ -215,8 +246,7 @@ async function attachAudio() {
       analyser.connect(context.destination);
       // Resumed only once the graph is connected. Resuming an unconnected
       // context is not the same act, and doing it early broke this once.
-      await context.resume().catch(() => {});
-      await settled(context);
+      await resumeAudio('startup');
       post(`[${bootClock()}] Audio ${context.state}.`);
       // iOS will not start audio outside a user gesture, and the tap that
       // started the session was spent compiling the WebAssembly. The context is
@@ -224,7 +254,6 @@ async function attachAudio() {
       // this frame, which is otherwise hidden machinery, to carry it.
       if (context.state !== 'running') await askForTap();
       emit('audio', { state: context.state, sampleRate: context.sampleRate });
-      context.onstatechange = () => emit('audio', { state: context.state, sampleRate: context.sampleRate });
       // A timer, not rAF: this document sits in a hidden container, and a
       // non-rendered frame's animation callbacks are throttled unpredictably.
       // 30 Hz is a conventional scope refresh; the window is longer than the
