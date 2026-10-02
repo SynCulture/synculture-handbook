@@ -1,4 +1,5 @@
 import { examples } from './sc-examples.mjs';
+import { splitStatements, describeStatement, statementLabel } from './sc-cell-split.mjs';
 
 const $ = selector => document.querySelector(selector);
 const channel = 'handbook-sc';
@@ -77,9 +78,33 @@ function setReady(value) {
   document.querySelectorAll('.cell-evaluate').forEach(button => { button.disabled = !value; });
   if ($('#instrument-controls')) $('#instrument-controls').disabled = !value;
 }
+// A line-wise cell is a run of separate things to try rather than one program,
+// so it is built as one box per statement, each with its own button. Everything
+// downstream — drafts, reset, the download — works in these units, which for an
+// ordinary cell is just the cell itself.
+function unitsOf(example, number) {
+  if (example.lineByLine !== true) {
+    return [{ id: example.id, code: example.code, label: number,
+              title: example.title, note: '' }];
+  }
+  return splitStatements(example.code).map((block, i) => {
+    const { note, code } = describeStatement(block);
+    return {
+      id: `${example.id}#${i + 1}`,
+      code,
+      label: statementLabel(number, i),
+      title: `${example.title} (${i + 1})`,
+      note,
+    };
+  });
+}
+const allUnits = examples.flatMap((example, index) =>
+  unitsOf(example, String(index + 1).padStart(2, '0')));
+const unitTitles = new Map(allUnits.map(unit => [unit.id, unit.title]));
+
 // A draft records the published source it was made from, so a cell can say
 // when the published version has moved on rather than silently shadowing it.
-const published = new Map(examples.map(example => [example.id, example.code]));
+const published = new Map(allUnits.map(unit => [unit.id, unit.code]));
 const cellLabels = new Map();
 function saveDrafts() {
   // Only cells that actually differ are stored. Snapshotting untouched cells
@@ -203,67 +228,94 @@ examples.forEach((example, index) => {
   const host = $(`[data-code-cell="${example.id}"]`);
   if (!host) return;
   const number = String(index + 1).padStart(2, '0');
-  const cell = document.createElement('section');
-  cell.className = 'code-cell';
-  cell.setAttribute('aria-labelledby', `cell-title-${example.id}`);
-  // Say in advance whether a cell sounds: the silent ones compile or build,
-  // and a reader who expects audio from them will think something is broken.
+  const units = unitsOf(example, number);
   const sounds = example.sounds === true;
-  const flag = `<span class="cell-sound" data-sounds="${sounds}">${
-    sounds ? 'makes sound' : 'no sound'}</span>`;
-  cell.innerHTML = `<header class="cell-header"><span class="cell-number">${number}</span><h3 id="cell-title-${example.id}"></h3>${flag}${example.lineByLine ? '<span class="cell-linewise">run a line at a time</span>' : '<button class="cell-evaluate" disabled>Evaluate <span aria-hidden="true">↗</span></button>'}</header><p class="cell-description"></p><textarea></textarea><footer class="cell-footer"><button class="cell-reset">Reset source</button><span class="cell-keys"><kbd>⇧ ⏎</kbd> selection, block or line &middot; <kbd>⇧ ⌘/Ctrl ⏎</kbd> whole cell</span><span class="cell-saved">Published source</span></footer>`;
-  cell.querySelector('h3').textContent = example.title;
-  cell.querySelector('.cell-description').textContent = example.description;
-  const evaluateButton = cell.querySelector('.cell-evaluate');  // null when line-wise
-  const textarea = cell.querySelector('textarea');
-  const draft = draftOf(example.id);
-  textarea.value = draft ? draft.code : example.code;
-  textarea.setAttribute('aria-label', `Cell ${number}: ${example.title}`);
-  // The host already holds the cell as a static listing, which is what a phone
-  // and a script-off reader get. Replace it rather than append to it: the live
-  // editor is the same cell in another state, not a second copy of it.
-  host.replaceChildren(cell);
-  const editor = CodeMirror.fromTextArea(textarea, {
-    mode: 'sclang', matchBrackets: true,
-    // Narrow viewports wrap: a phone cannot scroll a cell sideways and read the
-    // prose around it at the same time. Line numbers go with it — at 390px they
-    // cost a tenth of the column and say nothing the wrapped text does not.
-    indentUnit: 4, tabSize: 4, lineWrapping: NARROW.matches,
-    lineNumbers: !NARROW.matches, viewportMargin: 20,
-    extraKeys: {
-      'Shift-Enter': () => evaluate(editor, number, evaluateButton),
-      'Ctrl-Enter': () => evaluate(editor, number, evaluateButton),
-      'Cmd-Enter': () => evaluate(editor, number, evaluateButton),
-      'Shift-Ctrl-Enter': () => evaluate(editor, number, evaluateButton, true),
-      'Shift-Cmd-Enter': () => evaluate(editor, number, evaluateButton, true),
-    },
-  });
-  editor.getInputField().setAttribute('aria-label', `Cell ${number}: ${example.title}`);
-  editors.set(example.id, editor);
-  if (evaluateButton) {
-    evaluateButton.setAttribute('aria-label', `Evaluate cell ${number}`);
-    evaluateButton.dataset.cell = number;
-    evaluateButton.onclick = () => evaluate(editor, number, evaluateButton, true);
-  }
-  cell.querySelector('.cell-reset').setAttribute('aria-label', `Reset cell ${number}`);
-  cell.querySelector('.cell-reset').onclick = () => {
-    if (editor.getValue() !== example.code && !confirm(`Restore the published source in cell ${number}? This replaces your edits in this cell.`)) return;
-    editor.setValue(example.code); saveDrafts();
-  };
-  // Pruning leaves only drafts made from the source now on the page, so a
-  // surviving draft is never stale. A cell whose draft was dropped says so:
-  // the code in front of the reader changed between one load and the next, and
-  // that should be stated rather than discovered.
-  if (draft) {
-    cell.querySelector('.cell-saved').textContent = 'Restored local draft';
-  } else if (superseded.has(example.id)) {
-    cell.querySelector('.cell-saved').dataset.stale = 'true';
-    cell.querySelector('.cell-saved').textContent = 'Published source · this example was rewritten, your older draft was dropped';
-  }
-  cellLabels.set(example.id, cell.querySelector('.cell-saved'));
-  editor.on('change', () => {
-    cell.querySelector('.cell-saved').textContent = 'Saving…';
-    clearTimeout(saveTimer); saveTimer = setTimeout(saveDrafts, 250);
+  const built = [];
+
+  units.forEach((unit, position) => {
+    const first = position === 0;
+    const cell = document.createElement('section');
+    cell.className = 'code-cell' + (units.length > 1 ? ' code-cell--step' : '');
+    cell.setAttribute('aria-labelledby', `cell-title-${example.id}-${position}`);
+    // Say in advance whether a cell sounds: the silent ones compile or build,
+    // and a reader who expects audio from them will think something is broken.
+    // Said once per cell, on the first box, not once per statement.
+    const flag = first
+      ? `<span class="cell-sound" data-sounds="${sounds}">${sounds ? 'makes sound' : 'no sound'}</span>`
+      : '';
+    cell.innerHTML = `<header class="cell-header"><span class="cell-number">${unit.label}</span><h3 id="cell-title-${example.id}-${position}"></h3>${flag}<button class="cell-evaluate" disabled>Evaluate <span aria-hidden="true">↗</span></button></header><p class="cell-description"></p><textarea></textarea><footer class="cell-footer"><button class="cell-reset">Reset source</button><span class="cell-keys"><kbd>⇧ ⏎</kbd> selection, block or line &middot; <kbd>⇧ ⌘/Ctrl ⏎</kbd> whole cell</span><span class="cell-saved">Published source</span></footer>`;
+    // The heading is the cell's, said once; a statement carries its own note.
+    cell.querySelector('h3').textContent = first ? example.title : '';
+    const description = cell.querySelector('.cell-description');
+    if (first && units.length > 1) {
+      description.textContent = `${example.description} Each box below runs on its own: change a value and press Evaluate again.`;
+    } else if (first) {
+      description.textContent = example.description;
+    } else {
+      description.textContent = unit.note;
+    }
+    if (!first && unit.note) description.classList.add('cell-step-note');
+    if (first && units.length > 1 && unit.note) {
+      const note = document.createElement('p');
+      note.className = 'cell-description cell-step-note';
+      note.textContent = unit.note;
+      description.after(note);
+    }
+
+    const evaluateButton = cell.querySelector('.cell-evaluate');
+    const textarea = cell.querySelector('textarea');
+    const draft = draftOf(unit.id);
+    textarea.value = draft ? draft.code : unit.code;
+    textarea.setAttribute('aria-label', `Cell ${unit.label}: ${unit.title}`);
+    built.push(cell);
+
+    // Appended to the document before CodeMirror measures it, which it cannot
+    // do from a detached node.
+    if (first) host.replaceChildren(cell); else host.append(cell);
+
+    const editor = CodeMirror.fromTextArea(textarea, {
+      mode: 'sclang', matchBrackets: true,
+      // Narrow viewports wrap: a phone cannot scroll a cell sideways and read the
+      // prose around it at the same time. Line numbers go with it — at 390px they
+      // cost a tenth of the column and say nothing the wrapped text does not.
+      indentUnit: 4, tabSize: 4, lineWrapping: NARROW.matches,
+      lineNumbers: !NARROW.matches, viewportMargin: 20,
+      extraKeys: {
+        'Shift-Enter': () => evaluate(editor, unit.label, evaluateButton),
+        'Ctrl-Enter': () => evaluate(editor, unit.label, evaluateButton),
+        'Cmd-Enter': () => evaluate(editor, unit.label, evaluateButton),
+        'Shift-Ctrl-Enter': () => evaluate(editor, unit.label, evaluateButton, true),
+        'Shift-Cmd-Enter': () => evaluate(editor, unit.label, evaluateButton, true),
+      },
+    });
+    editor.getInputField().setAttribute('aria-label', `Cell ${unit.label}: ${unit.title}`);
+    editors.set(unit.id, editor);
+
+    evaluateButton.setAttribute('aria-label', `Evaluate cell ${unit.label}`);
+    evaluateButton.dataset.cell = unit.label;
+    evaluateButton.onclick = () => evaluate(editor, unit.label, evaluateButton, true);
+
+    const reset = cell.querySelector('.cell-reset');
+    reset.setAttribute('aria-label', `Reset cell ${unit.label}`);
+    reset.onclick = () => {
+      if (editor.getValue() !== unit.code && !confirm(`Restore the published source in cell ${unit.label}? This replaces your edits in this cell.`)) return;
+      editor.setValue(unit.code); saveDrafts();
+    };
+    // Pruning leaves only drafts made from the source now on the page, so a
+    // surviving draft is never stale. A cell whose draft was dropped says so:
+    // the code in front of the reader changed between one load and the next, and
+    // that should be stated rather than discovered.
+    if (draft) {
+      cell.querySelector('.cell-saved').textContent = 'Restored local draft';
+    } else if (superseded.has(unit.id)) {
+      cell.querySelector('.cell-saved').dataset.stale = 'true';
+      cell.querySelector('.cell-saved').textContent = 'Published source · this example was rewritten, your older draft was dropped';
+    }
+    cellLabels.set(unit.id, cell.querySelector('.cell-saved'));
+    editor.on('change', () => {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(saveDrafts, 400);
+    });
   });
 });
 
@@ -432,7 +484,7 @@ if ($('#release-synth')) $('#release-synth').onclick = () => {
 };
 if ($('#clear-post')) $('#clear-post').onclick = () => { postText = ''; $('#post-output').textContent = ''; $('#post-announcement').textContent = ''; };
 if ($('#download-source')) $('#download-source').onclick = () => {
-  const source = [...editors].map(([id, editor]) => `// ${examples.find(example => example.id === id).title}\n${editor.getValue()}`).join('\n\n');
+  const source = [...editors].map(([id, editor]) => `// ${unitTitles.get(id) || id}\n${editor.getValue()}`).join('\n\n');
   const url = URL.createObjectURL(new Blob([source + '\n'], { type: 'text/plain' }));
   const a = document.createElement('a'); a.href = url; a.download = 'handbook-pulsar.scd'; a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
