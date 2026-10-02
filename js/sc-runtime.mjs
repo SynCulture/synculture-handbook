@@ -443,5 +443,22 @@ addEventListener('message', async event => {
     }
   } catch (error) { fail(error); }
 });
-addEventListener("pagehide", () => { clearInterval(scopeFrame); context?.close(); });
+// Letting go of the audio session. iOS allows a page only a small number of
+// AudioContexts, and one that is never closed is never given back: start a
+// session, restart it a few times or reload the page, and the next one has
+// nothing left to allocate and takes a long time failing to say so.
+function shutdown() {
+  clearInterval(scopeFrame);
+  scopeFrame = 0;
+  try { context?.close(); } catch { /* already closed or never opened */ }
+  context = null;
+  ready = false;
+}
+addEventListener('pagehide', shutdown);
+// A frame removed from the document does not reliably get pagehide, so the page
+// says so explicitly before it drops the element.
+addEventListener('message', event => {
+  if (event.origin !== location.origin) return;
+  if (event.data?.channel === channel && event.data.type === 'shutdown') shutdown();
+});
 start().catch(fail);

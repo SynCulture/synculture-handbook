@@ -331,10 +331,26 @@ window.scReport = () => {
   return frame.contentWindow.scAudioReport();
 };
 
+// Hand the old session's audio context back before the frame holding it goes.
+// Removing the element does not reliably fire pagehide inside it, so the close
+// is asked for and the element dropped a moment later. iOS counts contexts, and
+// a leaked one is a context the next session cannot have.
+function teardownSession() {
+  const old = iframe;
+  iframe = null;
+  if (!old) return;
+  try {
+    old.contentWindow?.postMessage(
+      { channel, token: session, type: 'shutdown' }, location.origin);
+  } catch { /* frame already gone */ }
+  setTimeout(() => old.remove(), 300);
+}
+addEventListener('pagehide', teardownSession);
+
 function startSession() {
   if (starting) return;
   if (!crossOriginIsolated) { message('Open this local preview using npm run preview. The language runtime needs isolation headers.', true); return; }
-  iframe?.remove();
+  teardownSession();
   resetParameters();
   nodeId = -1; waveBuffer = -1; envelopeBuffer = -1;
   drawScope([], 0); $('#sample-rate').textContent = 'Server offline';
@@ -377,7 +393,7 @@ function failed(text) {
   starting = false; setReady(false); nodeId = -1; waveBuffer = -1; envelopeBuffer = -1;
   status('language', 'error'); status('server', 'error');
   message(text, true); post(`Runtime error: ${text}`);
-  iframe?.remove(); iframe = null;
+  teardownSession();
   drawScope([], 0); $('#sample-rate').textContent = 'Server offline';
   $('#start-session').textContent = 'Start session ↗';
   $('#start-session').disabled = false;
